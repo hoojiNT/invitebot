@@ -585,7 +585,7 @@ class Invs(commands.Cog):
     #------------------------------
     # Make an invite
     #------------------------------
-    async def make(self, ctx, channel: discord.TextChannel, name: str = "None", role: discord.Role = 0, uses: int = 0, age: int = 0):
+    async def make(self, ctx, channel: discord.TextChannel, name: str = "None", role: discord.Role = 0, uses: int = 0, age: int = 0, amount: int = 1):
         if self.checkInvos(ctx.guild.id) == 1:
             await ctx.message.delete(delay = 3)
 
@@ -602,49 +602,57 @@ class Invs(commands.Cog):
         with open(f"configs/{ctx.guild.id}.json", "r") as f:
             config = json.load(f)
 
-        try:
-            invite = await channel.create_invite(max_age = age, max_uses = uses)
-        except discord.HTTPException as msg_ex:
-            if msg_ex.code == 50013 and msg_ex.status == 403:
-                await ctx.send("Bot is missing permissions to create an invite.\n[https://docs.invitebot.xyz/error-helpers/#bot-is-missing-permissions-to-create-an-invite]")
+        if amount == 1:
+            try:
+                invite = await channel.create_invite(max_age = age, max_uses = uses)
+            except discord.HTTPException as msg_ex:
+                if msg_ex.code == 50013 and msg_ex.status == 403:
+                    await ctx.send("Bot is missing permissions to create an invite.\n[https://docs.invitebot.xyz/error-helpers/#bot-is-missing-permissions-to-create-an-invite]")
                 return
 
-        config["Invites"][f"{invite.code}"] = {}
-        config["Invites"][f"{invite.code}"]["name"] = name
-        if role != 0:
-            config["Invites"][f"{invite.code}"]["roles"] = [role.id]
-        else:
-            config["Invites"][f"{invite.code}"]['roles'] = []
-        config["Invites"][f"{invite.code}"]["uses"] = uses
-        config["Invites"][f"{invite.code}"]["welcome"] = "None"
-        config["Invites"][f"{invite.code}"]["tags"] = {}
-        if uses == 1:
-            config['Invites'][f"{invite.code}"]["tags"]["1use"] = True
-        if ("COMMUNITY" in invite.guild.features) and ("MEMBER_VERIFICATION_GATE_ENABLED" in invite.guild.features):
-            if config["General"]["AwaitRulesAccept"] is True:
-                config["Invites"][f"{invite.code}"]["tags"]["awaitrules"] = True
-
-        if name == "None":
-            if role == 0:
-                await ctx.send(f"{ctx.author}[`{ctx.author.id}`] created an invite https://discord.gg/{invite.code} in {channel}, age: {age} and uses: {uses}")
-                self.log(invite.guild.id, f"{ctx.author}[{ctx.author.id}] created an invite https://discord.gg/{invite.code} in {channel}, age: {age} and uses: {uses}")
-                await self.serverLog(ctx.guild.id, "inv_made", f"<@{ctx.author.id}>[`{ctx.author.id}`] created invite `https://discord.gg/{invite.code}` in {channel}, age: {invite.max_age} and uses: {invite.max_uses}")
+            config["Invites"][f"{invite.code}"] = {}
+            config["Invites"][f"{invite.code}"]["name"] = name
+            if role != 0:
+                config["Invites"][f"{invite.code}"]["roles"] = [role.id]
             else:
-                await ctx.send(f"{ctx.author}[`{ctx.author.id}`] created an invite https://discord.gg/{invite.code} in {channel} with {role} on join, age: {age} and uses: {uses}")
-                self.log(invite.guild.id, f"{ctx.author}[{ctx.author.id}] created an invite https://discord.gg/{invite.code} in {channel} with {role} on join, age: {age} and uses: {uses}")
-                await self.serverLog(ctx.guild.id, "inv_made", f"<@{ctx.author.id}>[`{ctx.author.id}`] created invite `https://discord.gg/{invite.code}` in {channel} with {role} on join, age: {invite.max_age} and uses: {invite.max_uses}")
-        else:
-            if role == 0:
-                await ctx.send(f"{ctx.author}[`{ctx.author.id}`] created an invite https://discord.gg/{invite.code} named {name} in {channel}, age: {age} and uses: {uses}")
-                self.log(invite.guild.id, f"{ctx.author}[{ctx.author.id}] created an invite https://discord.gg/{invite.code} named {name} in {channel}, age: {age} and uses: {uses}")
-                await self.serverLog(ctx.guild.id, "inv_made", f"<@{ctx.author.id}>[`{ctx.author.id}`] created invite `https://discord.gg/{invite.code} named {name}` in {channel}, age: {invite.max_age} and uses: {invite.max_uses}")
-            else:
-                await ctx.send(f"{ctx.author}[`{ctx.author.id}`] created an invite https://discord.gg/{invite.code} named {name} in {channel} with {role} on join, age: {age} and uses: {uses}")
-                self.log(invite.guild.id, f"{ctx.author}[{ctx.author.id}] created an invite https://discord.gg/{invite.code} named {name} in {channel} with {role} on join, age: {age} and uses: {uses}")
-                await self.serverLog(ctx.guild.id, "inv_made", f"<@{ctx.author.id}>[`{ctx.author.id}`] created invite `https://discord.gg/{invite.code} named {name}` in {channel} with {role} on join, age: {invite.max_age} and uses: {invite.max_uses}")
+                config["Invites"][f"{invite.code}"]['roles'] = []
+            config["Invites"][f"{invite.code}"]["uses"] = uses
+            config["Invites"][f"{invite.code}"]["welcome"] = "None"
+            config["Invites"][f"{invite.code}"]["tags"] = {}
+            if uses == 1:
+                config['Invites'][f"{invite.code}"]["tags"]["1use"] = True
+            if ("COMMUNITY" in invite.guild.features) and ("MEMBER_VERIFICATION_GATE_ENABLED" in invite.guild.features):
+                if config["General"]["AwaitRulesAccept"] is True:
+                    config["Invites"][f"{invite.code}"]["tags"]["awaitrules"] = True
 
-        with open(f"configs/{ctx.guild.id}.json", "w") as f:
-            json.dump(config, f, indent = 4)
+            if name == "None":
+                if role == 0:
+                    await ctx.send(f"{ctx.author}[`{ctx.author.id}`] created an invite https://discord.gg/{invite.code} in {channel}, age: {age} and uses: {uses}")
+                    self.log(invite.guild.id, f"{ctx.author}[{ctx.author.id}] created an invite https://discord.gg/{invite.code} in {channel}, age: {age} and uses: {uses}")
+                    await self.serverLog(ctx.guild.id, "inv_made", f"<@{ctx.author.id}>[`{ctx.author.id}`] created invite `https://discord.gg/{invite.code}` in {channel}, age: {invite.max_age} and uses: {invite.max_uses}")
+                else:
+                    await ctx.send(f"{ctx.author}[`{ctx.author.id}`] created an invite https://discord.gg/{invite.code} in {channel} with {role} on join, age: {age} and uses: {uses}")
+                    self.log(invite.guild.id, f"{ctx.author}[{ctx.author.id}] created an invite https://discord.gg/{invite.code} in {channel} with {role} on join, age: {age} and uses: {uses}")
+                    await self.serverLog(ctx.guild.id, "inv_made", f"<@{ctx.author.id}>[`{ctx.author.id}`] created invite `https://discord.gg/{invite.code}` in {channel} with {role} on join, age: {invite.max_age} and uses: {invite.max_uses}")
+            else:
+                if role == 0:
+                    await ctx.send(f"{ctx.author}[`{ctx.author.id}`] created an invite https://discord.gg/{invite.code} named {name} in {channel}, age: {age} and uses: {uses}")
+                    self.log(invite.guild.id, f"{ctx.author}[{ctx.author.id}] created an invite https://discord.gg/{invite.code} named {name} in {channel}, age: {age} and uses: {uses}")
+                    await self.serverLog(ctx.guild.id, "inv_made", f"<@{ctx.author.id}>[`{ctx.author.id}`] created invite `https://discord.gg/{invite.code} named {name}` in {channel}, age: {invite.max_age} and uses: {invite.max_uses}")
+                else:
+                    await ctx.send(f"{ctx.author}[`{ctx.author.id}`] created an invite https://discord.gg/{invite.code} named {name} in {channel} with {role} on join, age: {age} and uses: {uses}")
+                    self.log(invite.guild.id, f"{ctx.author}[{ctx.author.id}] created an invite https://discord.gg/{invite.code} named {name} in {channel} with {role} on join, age: {age} and uses: {uses}")
+                    await self.serverLog(ctx.guild.id, "inv_made", f"<@{ctx.author.id}>[`{ctx.author.id}`] created invite `https://discord.gg/{invite.code} named {name}` in {channel} with {role} on join, age: {invite.max_age} and uses: {invite.max_uses}")
+
+            with open(f"configs/{ctx.guild.id}.json", "w") as f:
+                json.dump(config, f, indent = 4)
+        else:
+            invites = []
+            for i in range(0, int(amount)):
+                invite = await channel.create_invite(max_age = age, max_uses = uses)
+                invites.append(f"https://discord.gg/{invite.code}")
+
+            await ctx.send(f"Generated {amount} invites:\n{''.join(line for line in invites)}")
 
     @make.error
     async def make_err_handler(self, ctx, error):
